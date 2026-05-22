@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ur5e_description_extras</name>
+  <version>0.1.0</version>
+  <description>
+    Universal Robots UR5e + Robotiq 2F-85 gripper sim extras for the
+    rl_environments stack. Mounts the UR5e on a 4-legged ur5_base
+    (~0.59 m), adds a cafe table next to it, head-mount Kinect v2, and
+    brings up ros_control with PID gains for the 6-DOF arm + gripper.
+
+    Mirrors reactorx200_description's role for the RX200, vx300s for the
+    ViperX, and ned2 for the Niryo — keeps RL packages free of URDF and
+    launch noise while letting the description ship independently for
+    MoveIt / RViz / standalone simulation.
+  </description>
+
+  <maintainer email="j.kapukotuwa@research.ait.ie">Jay Kapukotuwa</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Upstream URDF + meshes (ros-industrial UR5e and Robotiq 2F-85) -->
+  <exec_depend>ur_e_description</exec_depend>
+  <exec_depend>robotiq_description</exec_depend>
+  <!-- Kinect v2 xacro -->
+  <exec_depend>common_sensors</exec_depend>
+
+  <!-- Gazebo + ros_control runtime -->
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros_control</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_controller</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>effort_controllers</exec_depend>
+  <exec_depend>position_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <!-- MoveIt config (launch passes through to ur5e_robotiq_85_moveit_config) -->
+  <exec_depend>ur5e_robotiq_85_moveit_config</exec_depend>
+
+  <export>
+    <gazebo_ros gazebo_model_path="${prefix}/.." />
+  </export>
+</package>

@@ -1,0 +1,13 @@
+<launch>
+  <!--
+    Spawn joint_state_controller, arm_controller, and gripper_controller
+    under whichever namespace this launch is included in. Mirrors
+    vx300s_control.launch / reactorx200_control.launch.
+  -->
+  <rosparam file="$(find ur5e_description_extras)/config/ur5e_controller.yaml"
+            command="load"/>
+
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        respawn="false" output="screen"
+        args="joint_state_controller arm_controller gripper_controller"/>
+</launch>

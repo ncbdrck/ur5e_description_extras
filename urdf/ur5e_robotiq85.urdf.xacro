@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!--
+  UR5e + Robotiq 2F-85 gripper wrap.
+
+  Upstream chain (each include adds the world frame + gazebo_ros_control
+  plugin via common.gazebo.xacro):
+    ur_e_description/urdf/ur5e_joint_limited_robot.urdf.xacro
+      -> common.gazebo.xacro
+      -> ur5e.urdf.xacro
+
+  We then attach the Robotiq 2F-85 via a small coupler link on tool0,
+  add the gazebo FT sensor on wrist_3_joint, and the gazebo gripper
+  plugin for sim grasps. Stays self-contained so MoveIt / RViz / Gazebo
+  can load this URDF directly without any RL-stack deps.
+-->
+<robot name="ur5e_robotiq_85" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find ur_e_description)/urdf/ur5e_joint_limited_robot.urdf.xacro"/>
+  <xacro:include filename="$(find robotiq_description)/urdf/robotiq_85_gripper.urdf.xacro"/>
+
+  <!-- Robotiq coupler — 8 mm between tool0 and the gripper base. -->
+  <link name="robotiq_coupler">
+    <visual>
+      <geometry>
+        <mesh filename="package://robotiq_description/meshes/robotiq_85_coupler.stl"/>
+      </geometry>
+      <material name="flat_black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://robotiq_description/meshes/robotiq_85_coupler.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="2.073e-05 1.45286e-03 -1.1049e-03" rpy="0 0 0"/>
+      <mass value="0.168"/>
+      <inertia ixx="6.69695624e-05" ixy="5.21511788e-09" ixz="-2.74383009e-08"
+               iyy="7.85088161e-05" iyz="5.41105193e-07" izz="1.41819717e-04"/>
+    </inertial>
+  </link>
+
+  <joint name="robotiq_coupler_joint" type="fixed">
+    <origin xyz="0 0 0.004" rpy="0 0 ${-pi/2.0}"/>
+    <parent link="tool0"/>
+    <child link="robotiq_coupler"/>
+  </joint>
+
+  <gazebo reference="robotiq_coupler">
+    <mu1>0.9</mu1>
+    <mu2>0.9</mu2>
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+
+  <xacro:robotiq_85_gripper prefix="" parent="robotiq_coupler">
+    <origin xyz="0 0 0.004" rpy="0 ${-pi/2} ${pi}"/>
+  </xacro:robotiq_85_gripper>
+
+  <!-- Gazebo wrist FT sensor. -->
+  <gazebo reference="wrist_3_joint">
+    <provideFeedback>true</provideFeedback>
+  </gazebo>
+  <gazebo>
+    <plugin name="ft_sensor_plugin" filename="libgazebo_ros_ft_sensor.so">
+      <updateRate>250.0</updateRate>
+      <topicName>ft_sensor/raw</topicName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <jointName>wrist_3_joint</jointName>
+    </plugin>
+  </gazebo>
+
+  <!-- Gazebo grasp plugin: stick the cube to the gripper when both
+       finger tips are in contact. Sim convenience; the real Robotiq
+       achieves the same via mechanical friction. -->
+  <gazebo>
+    <gripper name="gazebo_gripper">
+      <grasp_check>
+        <attach_steps>2</attach_steps>
+        <detach_steps>2</detach_steps>
+        <min_contact_count>3</min_contact_count>
+      </grasp_check>
+      <gripper_link>robotiq_85_left_finger_tip_link</gripper_link>
+      <gripper_link>robotiq_85_right_finger_tip_link</gripper_link>
+      <palm_link>robotiq_85_base_link</palm_link>
+    </gripper>
+  </gazebo>
+
+</robot>

@@ -1,0 +1,85 @@
+<launch>
+  <!--
+    Standalone Gazebo bring-up for the UR5e sim scene:
+      * empty_world
+      * ur5_base (4-legged ~0.59 m platform)
+      * cafe_table next to the base (top at z = 0.775)
+      * UR5e + Robotiq 2F-85 spawned on top of ur5_base (z = 0.59)
+      * optional red cube on the table
+      * head-mount Kinect v2
+      * robot_state_publisher + ros_control
+
+    Verify with:
+      roslaunch ur5e_description_extras ur5e_gazebo.launch
+      rostopic echo /ur5e/joint_states
+      rostopic list | grep /ur5e/arm_controller
+
+    To include MoveIt in the same bring-up:
+      roslaunch ur5e_description_extras ur5e_gazebo.launch start_moveit:=true
+  -->
+  <arg name="robot_name"     default="ur5e"/>
+  <arg name="paused"         default="false"/>
+  <arg name="gui"            default="true"/>
+  <arg name="load_cube"      default="true"/>
+  <arg name="start_moveit"   default="false"/>
+  <arg name="use_moveit_rviz" default="false"/>
+
+  <!-- Make the local models/ folder visible to Gazebo so `model://ur5_base`
+       etc. resolve without manual GAZEBO_MODEL_PATH setup. -->
+  <env name="GAZEBO_MODEL_PATH"
+       value="$(find ur5e_description_extras)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+
+  <!-- 1. World. -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="worlds/empty.world"/>
+    <arg name="gui"        value="$(arg gui)"/>
+    <arg name="paused"     value="$(arg paused)"/>
+  </include>
+
+  <!-- 2. ur5_base + cafe_table + (optional) cube.
+       Base top surface at z=0.59 (0.58 plate centre + 0.01 half-thickness).
+       Table at x=0.7, top at z=0.775. Cube on the table, near the arm's
+       reachable workspace. -->
+  <node name="spawn_ur5_base" pkg="gazebo_ros" type="spawn_model"
+        args="-sdf -file $(find ur5e_description_extras)/models/ur5_base/model.sdf
+              -model ur5_base -x 0 -y 0 -z 0"/>
+
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model"
+        args="-sdf -file $(find ur5e_description_extras)/models/cafe_table/model.sdf
+              -model cafe_table -x 0.7 -y 0 -z 0"/>
+
+  <node if="$(arg load_cube)" name="spawn_cube" pkg="gazebo_ros" type="spawn_model"
+        args="-sdf -file $(find ur5e_description_extras)/models/block/block.sdf
+              -model red_cube -x 0.4 -y -0.2 -z 0.78"/>
+
+  <!-- 3. UR5e + Robotiq + Kinect URDF under /ur5e namespace.
+       Spawn at z=0.59 so the arm sits on top of the ur5_base. -->
+  <group ns="$(arg robot_name)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder
+                    '$(find ur5e_description_extras)/urdf/ur5e_robotiq85_kinect.urdf.xacro'"/>
+
+    <node name="ur5e_spawn" pkg="gazebo_ros" type="spawn_model"
+          respawn="false" output="screen"
+          args="-urdf -param /$(arg robot_name)/robot_description
+                -robot_namespace /$(arg robot_name)
+                -model $(arg robot_name)
+                -z 0.59"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher"
+          type="robot_state_publisher" output="screen"/>
+
+    <include file="$(find ur5e_description_extras)/launch/ur5e_control.launch"/>
+  </group>
+
+  <!-- 4. Optional MoveIt. Uses the existing ur5e_robotiq_85_moveit_config. -->
+  <include if="$(arg start_moveit)"
+           file="$(find ur5e_robotiq_85_moveit_config)/launch/move_group.launch">
+    <arg name="publish_monitored_planning_scene" value="true"/>
+    <arg name="fake_execution_type"              value="false"/>
+    <arg name="moveit_controller_manager"        value="simple"/>
+  </include>
+
+  <node if="$(arg use_moveit_rviz)" name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find ur5e_robotiq_85_moveit_config)/launch/moveit.rviz"/>
+</launch>
