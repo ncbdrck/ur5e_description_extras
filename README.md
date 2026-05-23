@@ -11,8 +11,8 @@ the RX200:
 - Spawns a `cafe_table` next to the base (top at z = 0.775).
 - Adds a **head-mount Kinect v2** so cube-tracking workflows share the
   same camera topology as the other robots.
-- Brings up **ros_control** with PID gains tuned for the 6-DOF arm +
-  Robotiq gripper.
+- Brings up **ros_control** with plugin-level Gazebo PID gains for the
+  6-DOF arm plus a trajectory controller for the Robotiq gripper.
 - Ships local copies of `ur5_base`, `cafe_table`, and a red cube under
   `models/` so the scene is self-contained.
 
@@ -34,11 +34,20 @@ roslaunch ur5e_description_extras ur5e_gazebo.launch          # term 2
 Expected:
 - Gazebo opens with the ur5_base at origin, cafe_table at x=0.7, red
   cube on the table, and UR5e + Robotiq 2F-85 mounted on top of the
-  base (`base_link` at z = 0.59).
+  base (`base_link` at z = 0.59). The default launch pose is folded
+  upright, not all-zeros, so the arm starts above the tabletop.
 - `rostopic echo /ur5e/joint_states` publishes 6 arm joints + the
   Robotiq knuckle at ~300 Hz.
 - `rostopic list | grep /ur5e/arm_controller` shows `/command` + state
   topics.
+
+The safe startup pose can be overridden from the command line:
+
+```bash
+roslaunch ur5e_description_extras ur5e_gazebo.launch \
+  shoulder_pan:=0 shoulder_lift:=-1.5707 elbow:=1.5707 \
+  wrist_1:=-1.5707 wrist_2:=-1.5707 wrist_3:=0
+```
 
 To bring up MoveIt against the same Gazebo controllers:
 

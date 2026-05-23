@@ -20,6 +20,10 @@
   <xacro:include filename="$(find ur_e_description)/urdf/ur5e.urdf.xacro"/>
   <xacro:include filename="$(find robotiq_description)/urdf/robotiq_85_gripper.urdf.xacro"/>
 
+  <material name="flat_black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+
   <!-- 1. UR5e arm, joint-limited to ±pi on every joint. -->
   <xacro:ur5e_robot prefix="" joint_limited="true"
     shoulder_pan_lower_limit="${-pi}"  shoulder_pan_upper_limit="${pi}"

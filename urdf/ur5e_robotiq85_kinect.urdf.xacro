@@ -8,7 +8,7 @@
   toward the workspace), offset by the cafe-table x = 0.7 so the
   cube workspace is centred in frame.
 -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5e_robotiq_85_kinect">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5">
   <xacro:include filename="$(find ur5e_description_extras)/urdf/ur5e_robotiq85.urdf.xacro"/>
 
   <xacro:include filename="$(find common_sensors)/urdf/sensors/kinect2.urdf.xacro"/>

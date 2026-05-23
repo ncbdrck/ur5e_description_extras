@@ -43,7 +43,7 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>model://viperx300s_description/models/table/meshes/cafe_table.dae</uri>
+            <uri>model://cafe_table/meshes/cafe_table.dae</uri>
           </mesh>
         </geometry>
       </visual>
