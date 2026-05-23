@@ -2,23 +2,55 @@
 <!--
   UR5e + Robotiq 2F-85 gripper wrap.
 
-  Upstream chain (each include adds the world frame + gazebo_ros_control
-  plugin via common.gazebo.xacro):
-    ur_e_description/urdf/ur5e_joint_limited_robot.urdf.xacro
-      -> common.gazebo.xacro
-      -> ur5e.urdf.xacro
+  We deliberately bypass ur_e_description/urdf/ur5e_joint_limited_robot.urdf.xacro
+  because it includes common.gazebo.xacro which hardcodes
+  <robotNamespace>/</robotNamespace> — that breaks any setup that spawns
+  the URDF under a /ur5e namespace (gazebo_ros_control then looks for
+  /robot_description at root and never finds it, so controller_manager
+  never starts).
 
-  We then attach the Robotiq 2F-85 via a small coupler link on tool0,
-  add the gazebo FT sensor on wrist_3_joint, and the gazebo gripper
-  plugin for sim grasps. Stays self-contained so MoveIt / RViz / Gazebo
-  can load this URDF directly without any RL-stack deps.
+  Instead we include ur5e.urdf.xacro directly (which only brings in
+  transmissions + selfCollide tags), invoke the ur5e_robot macro
+  ourselves with joint-limited args, declare our own world link, and
+  attach gazebo_ros_control with <robotNamespace>/ur5e</robotNamespace>.
+  Robotiq 2F-85 attached via a small coupler link on tool0.
 -->
 <robot name="ur5e_robotiq_85" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find ur_e_description)/urdf/ur5e_joint_limited_robot.urdf.xacro"/>
+  <xacro:include filename="$(find ur_e_description)/urdf/ur5e.urdf.xacro"/>
   <xacro:include filename="$(find robotiq_description)/urdf/robotiq_85_gripper.urdf.xacro"/>
 
-  <!-- Robotiq coupler — 8 mm between tool0 and the gripper base. -->
+  <!-- 1. UR5e arm, joint-limited to ±pi on every joint. -->
+  <xacro:ur5e_robot prefix="" joint_limited="true"
+    shoulder_pan_lower_limit="${-pi}"  shoulder_pan_upper_limit="${pi}"
+    shoulder_lift_lower_limit="${-pi}" shoulder_lift_upper_limit="${pi}"
+    elbow_joint_lower_limit="${-pi}"   elbow_joint_upper_limit="${pi}"
+    wrist_1_lower_limit="${-pi}"       wrist_1_upper_limit="${pi}"
+    wrist_2_lower_limit="${-pi}"       wrist_2_upper_limit="${pi}"
+    wrist_3_lower_limit="${-pi}"       wrist_3_upper_limit="${pi}"
+  />
+
+  <!-- 2. World frame. Lets us spawn the arm at an arbitrary z via
+       gazebo_ros spawn_model -z, and lets the Kinect xacro mount on
+       parent="world". -->
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 3. gazebo_ros_control plugin under /ur5e so the controllers
+       loaded in ur5e_control.launch land at /ur5e/<controller>/...
+       and our spawned URDF's controller_manager is reachable. -->
+  <gazebo>
+    <plugin name="ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/ur5e</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+
+  <!-- 4. Robotiq coupler — 8 mm between tool0 and the gripper base. -->
   <link name="robotiq_coupler">
     <visual>
       <geometry>
@@ -55,7 +87,7 @@
     <origin xyz="0 0 0.004" rpy="0 ${-pi/2} ${pi}"/>
   </xacro:robotiq_85_gripper>
 
-  <!-- Gazebo wrist FT sensor. -->
+  <!-- 5. Gazebo wrist FT sensor. -->
   <gazebo reference="wrist_3_joint">
     <provideFeedback>true</provideFeedback>
   </gazebo>
@@ -68,7 +100,7 @@
     </plugin>
   </gazebo>
 
-  <!-- Gazebo grasp plugin: stick the cube to the gripper when both
+  <!-- 6. Gazebo grasp plugin: stick the cube to the gripper when both
        finger tips are in contact. Sim convenience; the real Robotiq
        achieves the same via mechanical friction. -->
   <gazebo>
