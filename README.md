@@ -57,10 +57,12 @@ ur5e_description_extras/
 │   ├── ur5e_robotiq85.urdf.xacro         # UR5e + Robotiq 2F-85 + coupler + Gazebo plugins
 │   └── ur5e_robotiq85_kinect.urdf.xacro  # + head-mount Kinect v2
 ├── launch/
-│   ├── ur5e_gazebo.launch                # world + base + table + arm + control + (optional) cube/MoveIt
+│   ├── ur5e_gazebo.launch                # world + arm + control + (optional) cube/MoveIt
 │   └── ur5e_control.launch               # joint_state + arm + gripper spawn
 ├── config/
 │   └── ur5e_controller.yaml              # PID gains
+├── worlds/
+│   └── ur5e_scene.world                  # sun + ground + ur5_base + cafe_table baked in
 └── models/
     ├── ur5_base/                         # 4-legged 0.59 m platform (from utecrobotics/ur5)
     ├── cafe_table/                       # Gazebo stock cafe_table (top at z=0.775)

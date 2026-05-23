@@ -2,17 +2,17 @@
 <!--
   UR5e + Robotiq 2F-85 + head-mount Kinect v2.
 
-  Kinect is mounted to the URDF `world` frame so its pose is in
-  Gazebo world coordinates, not affected by the spawn offset of the
-  arm. The default <origin> below puts it ~1.6 m above the workspace,
-  tilted ~45 degrees toward the cafe-table top at (0.7, 0, 0.775).
-  Adjust to taste — RL envs subscribe to /kinect2/* regardless.
+  Kinect mounts to the URDF `world` frame (Gazebo world coordinates,
+  unaffected by the arm's spawn offset). Pose mirrors RX200's
+  rx200_kinect.urdf.xacro convention (camera in front, looking back
+  toward the workspace), offset by the cafe-table x = 0.7 so the
+  cube workspace is centred in frame.
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5e_robotiq_85_kinect">
   <xacro:include filename="$(find ur5e_description_extras)/urdf/ur5e_robotiq85.urdf.xacro"/>
 
   <xacro:include filename="$(find common_sensors)/urdf/sensors/kinect2.urdf.xacro"/>
   <xacro:kinect2 name="kinect2" parent="world">
-    <origin rpy="0 0.8 0" xyz="1.5 0 1.5"/>
+    <origin rpy="0 0.3 3.15" xyz="2.1 -0.08 0.9"/>
   </xacro:kinect2>
 </robot>
