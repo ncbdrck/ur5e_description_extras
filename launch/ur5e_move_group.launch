@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Bring up move_group under the /ur5e namespace so MoveIt clients can
+    reach /ur5e/move_group/... and an env's
+      MoveitMultiros(arm_name="arm", ns="ur5e",
+                     robot_description="ur5e/robot_description")
+    finds the right action servers + planning scene.
+
+    The upstream ur5e_robotiq_85_moveit_config was generated with no
+    namespace, so wrapping it in <group ns="ur5e"> here lets us reuse
+    it as-is without forking.
+
+    Mirrors the role of ned2_move_group.launch (NED2) and
+    xsarm_moveit_interface.launch (Interbotix) for the other robots.
+  -->
+
+  <arg name="allow_trajectory_execution" default="true"/>
+  <arg name="fake_execution_type"        default="false"/>
+  <arg name="moveit_controller_manager"  default="simple"/>
+  <arg name="publish_monitored_planning_scene" default="true"/>
+
+  <group ns="ur5e">
+    <!-- Remap controller action clients used by MoveIt's simple
+         controller_manager so they reach the /ur5e/-prefixed Gazebo
+         controllers. With ns="ur5e" the bare names below resolve to
+         /ur5e/{arm,gripper}_controller/... automatically. -->
+    <include file="$(find ur5e_robotiq_85_moveit_config)/launch/move_group.launch">
+      <arg name="allow_trajectory_execution" value="$(arg allow_trajectory_execution)"/>
+      <arg name="fake_execution_type"        value="$(arg fake_execution_type)"/>
+      <arg name="moveit_controller_manager"  value="$(arg moveit_controller_manager)"/>
+      <arg name="publish_monitored_planning_scene" value="$(arg publish_monitored_planning_scene)"/>
+    </include>
+  </group>
+</launch>
